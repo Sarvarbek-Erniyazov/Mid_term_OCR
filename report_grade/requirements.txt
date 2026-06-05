@@ -1,0 +1,8 @@
+gradio>=4.0
+easyocr
+transformers
+torch
+Pillow
+opencv-python-headless
+numpy
+google-genai
