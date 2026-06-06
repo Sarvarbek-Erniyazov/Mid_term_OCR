@@ -1,12 +1,4 @@
-"""
-pipeline/preprocess.py
-======================
-Dars 2 mavzusi: Preprocessing
-  Grayscale → Denoise (GaussianBlur) → Binarize (Otsu) → Deskew → Morphology
 
-Kirish : rasm fayl yo'li (str)
-Chiqish: tozalangan PIL Image
-"""
 
 import cv2
 import numpy as np
@@ -48,14 +40,14 @@ def _deskew(binary: np.ndarray) -> np.ndarray:
     """Rasm burchagini topib, to'g'rilaydi (Hough transform asosida)."""
     coords = np.column_stack(np.where(binary > 0))
     if len(coords) < 10:
-        return binary  # matn juda kam — o'zgartirmasdan qaytaradi
+        return binary  
 
     angle = cv2.minAreaRect(coords)[-1]
     if angle < -45:
         angle = 90 + angle
 
     if abs(angle) < 0.5:
-        return binary  # burchak kichik — deskew kerak emas
+        return binary  
 
     h, w = binary.shape
     center = (w // 2, h // 2)

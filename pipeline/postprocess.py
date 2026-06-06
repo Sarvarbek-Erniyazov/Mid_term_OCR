@@ -1,14 +1,4 @@
-"""
-pipeline/postprocess.py
-=======================
-Dars 5 mavzusi: Post-processing
-  - Matnni normallashtirish (bo'shliq, tinish belgilari)
-  - Confidence filter natijasi haqida ma'lumot
-  - CER/WER hisoblash (evaluation metrics)
 
-Kirish : ocr.py dan kelgan dict {"text", "confidence", "model"}
-Chiqish: dict {"clean_text": str, "stats": dict}
-"""
 
 import re
 
@@ -41,7 +31,7 @@ def postprocess_text(ocr_result: dict) -> dict:
 
 def compute_cer(reference: str, hypothesis: str) -> float:
     """
-    CER — Character Error Rate (Dars 5 metric).
+    CER — Character Error Rate .
     CER = edit_distance(ref, hyp) / len(ref)
     """
     if not reference:
@@ -51,7 +41,7 @@ def compute_cer(reference: str, hypothesis: str) -> float:
 
 def compute_wer(reference: str, hypothesis: str) -> float:
     """
-    WER — Word Error Rate (Dars 5 metric).
+    WER — Word Error Rate .
     WER = edit_distance(ref_words, hyp_words) / len(ref_words)
     """
     ref_words = reference.split()

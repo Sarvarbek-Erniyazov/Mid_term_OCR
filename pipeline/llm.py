@@ -1,17 +1,7 @@
-"""
-pipeline/llm.py
-===============
-LLM tahlil: Google Gemini (bepul tier)
-  - Matnni o'zbek tilida tahlil qiladi
-  - Ustozga: mavzular, to'liqlik, baho, izoh
-
-Kirish : clean_text (str), dars_nomi (str, ixtiyoriy)
-Chiqish: str — ustozga hisobot
-"""
 
 import os
 
-GEMINI_MODEL = "gemini-2.5-flash"   # bepul tier, eng tez
+GEMINI_MODEL = "gemini-2.5-flash"   
 
 
 def analyze_report(clean_text: str, dars_nomi: str = "") -> str:
@@ -23,12 +13,12 @@ def analyze_report(clean_text: str, dars_nomi: str = "") -> str:
     Returns    : ustozga o'zbekcha hisobot (str)
     """
     if not clean_text.strip():
-        return "❌ Matn bo'sh — OCR hech narsa o'qiy olmadi. Rasmni tekshiring."
+        return " Matn bo'sh — OCR hech narsa o'qiy olmadi. Rasmni tekshiring."
 
     api_key = _get_api_key()
     if api_key is None:
         return (
-            "❌ Gemini API kalit topilmadi.\n"
+            " Gemini API kalit topilmadi.\n"
             "Quyidagilardan birini bajaring:\n"
             "  1) .env fayliga:  GEMINI_API_KEY=sizning_kalitingiz\n"
             "  2) Terminal:      export GEMINI_API_KEY=sizning_kalitingiz\n"
@@ -40,7 +30,7 @@ def analyze_report(clean_text: str, dars_nomi: str = "") -> str:
         from google.genai import types
     except ImportError:
         return (
-            "❌ 'google-genai' kutubxonasi o'rnatilmagan.\n"
+            " 'google-genai' kutubxonasi o'rnatilmagan.\n"
             "Buyruq:  pip install -U google-genai"
         )
 
@@ -72,7 +62,7 @@ USTOZGA IZOH : (talabaga qanday maslahat berish kerak — 1-2 gap)
         )
         return response.text
     except Exception as e:
-        return f"❌ Gemini xatosi: {e}"
+        return f" Gemini xatosi: {e}"
 
 
 # ------------------------------------------------------------------
@@ -84,7 +74,7 @@ def _get_api_key() -> str | None:
     if key:
         return key
 
-    # .env faylni qo'lda o'qish (python-dotenv o'rnatilmagan bo'lsa ham)
+    
     env_path = os.path.join(os.path.dirname(__file__), "..", ".env")
     if os.path.exists(env_path):
         with open(env_path) as f:

@@ -1,13 +1,3 @@
-"""
-pipeline/ocr.py
-===============
-Dars 1, 3, 5 mavzusi: Pretrained OCR modellari
-  - EasyOCR  : tez, ko'p tilli, lotin/kirill
-  - TrOCR    : Transformer, handwriting uchun eng aniq
-
-Kirish : PIL Image (preprocessdan o'tgan)
-Chiqish: dict  { "text": str, "confidence": float | None, "model": str }
-"""
 
 import tempfile
 import numpy as np
@@ -27,7 +17,7 @@ def _get_easy_reader():
 def run_ocr_easyocr(image: Image.Image) -> dict:
     """
     EasyOCR bilan o'qish.
-    Confidence filter: 0.30 dan past bloklarni tashlaydi (Dars 5).
+    Confidence filter: 0.30 dan past bloklarni tashlaydi.
     """
     reader = _get_easy_reader()
 
@@ -62,23 +52,24 @@ def _get_trocr():
 
 
 def run_ocr_trocr(image: Image.Image) -> dict:
-    """
-    TrOCR bilan o'qish (handwriting — Dars 5).
-    Ko'p satrli report uchun rasmni gorizontal chiziqlar bo'yicha
-    satrlarga bo'lib, har birini alohida o'qiydi.
-    """
     processor, model = _get_trocr()
     rgb = image.convert("RGB")
-
-    lines = _split_into_lines(rgb)
+    
+    
+    w, h = rgb.size
     texts = []
-    for line_img in lines:
-        pixels = processor(images=line_img, return_tensors="pt").pixel_values
+    step = h // 5
+    
+    for i in range(5):
+        y1 = i * step
+        y2 = min((i + 1) * step, h)
+        crop = rgb.crop((0, y1, w, y2))
+        pixels = processor(images=crop, return_tensors="pt").pixel_values
         ids = model.generate(pixels, max_new_tokens=128)
         text = processor.batch_decode(ids, skip_special_tokens=True)[0].strip()
         if text:
             texts.append(text)
-
+    
     return {"text": "\n".join(texts), "confidence": None, "model": "TrOCR"}
 
 
@@ -92,8 +83,8 @@ def _split_into_lines(image: Image.Image, min_height: int = 15) -> list:
     gray = np.array(image.convert("L"))
     _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
-    row_sums = binary.sum(axis=1)           # har satr uchun qora piksel soni
-    in_text = row_sums > binary.shape[1] * 0.01   # 1% dan ortiq piksel = matn satri
+    row_sums = binary.sum(axis=1)           
+    in_text = row_sums > binary.shape[1] * 0.01   
 
     # Uzluksiz matn bloklarini topish
     regions, start = [], None
@@ -108,7 +99,7 @@ def _split_into_lines(image: Image.Image, min_height: int = 15) -> list:
         regions.append((start, len(in_text)))
 
     if not regions:
-        return [image]   # satrga bo'lib bo'lmadi — butun rasmni qaytaradi
+        return [image]   
 
     h_padding = 4
     orig = np.array(image)
@@ -121,7 +112,7 @@ def _split_into_lines(image: Image.Image, min_height: int = 15) -> list:
     return line_images
 
 
-# ---------- Umumiy kirish nuqtasi ----------
+
 def run_ocr(image: Image.Image, model_choice: str = "EasyOCR") -> dict:
     """
     model_choice: "EasyOCR" | "TrOCR"
