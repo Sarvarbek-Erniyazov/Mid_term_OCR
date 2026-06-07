@@ -3,7 +3,7 @@ pipeline/ocr.py
 ===============
 Dars 1, 3, 5 mavzusi: Pretrained OCR modellari
   - EasyOCR  : tez, ko'p tilli, lotin/kirill
-  - TrOCR    : Transformer, handwriting uchun eng aniq
+  - TrOCR    : Transformer, handwriting uchun eng aniq (fine-tuned: Sarvarbek13/trocr-uzbek)
   - PDF      : ko'p sahifali PDF ni o'qish
 
 Kirish : PIL Image yoki PDF fayl yo'li
@@ -53,12 +53,13 @@ def _get_trocr():
     if _trocr_model is None:
         from transformers import TrOCRProcessor, VisionEncoderDecoderModel
         import os
-        # Fine-tuned model bor bo'lsa uni ishlatamiz
+        # Fine-tuned model bor bo'lsa lokal, yo'qsa HuggingFace dan yuklanadi
         local_model = "trocr-uzbek"
         if os.path.exists(local_model):
             name = local_model
         else:
-            name = "microsoft/trocr-base-handwritten"
+            name = "Sarvarbek13/trocr-uzbek"
+        print(f"TrOCR model yuklanmoqda: {name}")
         _trocr_processor = TrOCRProcessor.from_pretrained(name)
         _trocr_model = VisionEncoderDecoderModel.from_pretrained(name)
     return _trocr_processor, _trocr_model
@@ -82,14 +83,12 @@ def run_ocr_trocr(image: Image.Image) -> dict:
         if text:
             texts.append(text)
 
-    return {"text": "\n".join(texts), "confidence": None, "model": "TrOCR"}
+    return {"text": "\n".join(texts), "confidence": None, "model": "TrOCR (uzbek fine-tuned)"}
 
 
 # ---------- PDF o'qish ----------
 def run_ocr_pdf(pdf_path: str, model_choice: str = "EasyOCR") -> dict:
-    """
-    PDF faylni sahifalarga bo'lib, har sahifani OCR qiladi.
-    """
+    """PDF faylni sahifalarga bo'lib, har sahifani OCR qiladi."""
     try:
         from pdf2image import convert_from_path
     except ImportError:
@@ -97,7 +96,6 @@ def run_ocr_pdf(pdf_path: str, model_choice: str = "EasyOCR") -> dict:
 
     import os
     poppler_path = None
-    # Windows uchun poppler yo'lini avtomatik topish
     possible_paths = [
         r"C:\Users\sarva\AppData\Local\Microsoft\WinGet\Packages\oschwartz10612.Poppler_Microsoft.Winget.Source_8wekyb3d8bbwe\poppler-25.07.0\Library\bin",
         r"C:\Program Files\poppler\bin",
@@ -117,7 +115,6 @@ def run_ocr_pdf(pdf_path: str, model_choice: str = "EasyOCR") -> dict:
 
     for i, page in enumerate(pages):
         from pipeline.preprocess import preprocess_image
-        import tempfile
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             page.save(tmp.name)
             processed = preprocess_image(tmp.name)
