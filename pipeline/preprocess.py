@@ -1,4 +1,12 @@
+"""
+pipeline/preprocess.py
+======================
+Dars 2 mavzusi: Preprocessing
+  Grayscale → Denoise → CLAHE → Binarize (Otsu) → Deskew → Morphology
 
+Kirish : rasm fayl yo'li (str)
+Chiqish: tozalangan PIL Image
+"""
 
 import cv2
 import numpy as np
@@ -18,36 +26,37 @@ def preprocess_image(image_path: str) -> Image.Image:
     # 2. Denoise — shovqinni kamaytirish
     denoised = cv2.GaussianBlur(gray, (3, 3), 0)
 
-    # 3. Binarize — Otsu thresholding (matnni fondan ajratish)
+    # 3. CLAHE — kontrast yaxshilash (Dars 5 da o'tilgan)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(denoised)
+
+    # 4. Binarize — Otsu thresholding (matnni fondan ajratish)
     _, binary = cv2.threshold(
-        denoised, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
     )
 
-    # 4. Deskew — qiyshiq hujjatni to'g'rilash
+    # 5. Deskew — qiyshiq hujjatni to'g'rilash
     straightened = _deskew(binary)
 
-    # 5. Morphological opening — mayda shovqin nuqtalarini o'chirish
+    # 6. Morphological opening — mayda shovqin nuqtalarini o'chirish
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
     cleaned = cv2.morphologyEx(straightened, cv2.MORPH_OPEN, kernel)
 
     return Image.fromarray(cleaned)
 
 
-# ------------------------------------------------------------------
-# Ichki yordamchi funksiya
-# ------------------------------------------------------------------
 def _deskew(binary: np.ndarray) -> np.ndarray:
     """Rasm burchagini topib, to'g'rilaydi (Hough transform asosida)."""
     coords = np.column_stack(np.where(binary > 0))
     if len(coords) < 10:
-        return binary  
+        return binary
 
     angle = cv2.minAreaRect(coords)[-1]
     if angle < -45:
         angle = 90 + angle
 
     if abs(angle) < 0.5:
-        return binary  
+        return binary
 
     h, w = binary.shape
     center = (w // 2, h // 2)
